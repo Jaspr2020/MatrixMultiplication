@@ -24,7 +24,7 @@ int main()
         timing = test(i, cycles, basicStrassenMultiply);
         std::cout << "Multiplying 2^" << i << " square matrices with Strassen's Algorithm takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
         timing = test(i, cycles, KStrassenMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with Improved Strassen's Algorithm (k = 2^6) takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
+        std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^6) takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
     }
 
     system("pause");
@@ -223,7 +223,7 @@ int* basicStrassenMultiply(int* x, int* y, int n) {
 
 int* KStrassenMultiply(int* x, int* y, int n) {
     // base case, matrices of size 1 x 1
-    if (n == k) {
+    if (n <= k) {
         // multiply x and y
         return naiveMultiply(x, y, n);
     }
