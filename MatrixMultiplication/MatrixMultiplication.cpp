@@ -11,14 +11,15 @@ double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n));
 int main()
 {
     srand(time(NULL));
-    int cycles = 10;
+    int cycles = 1; // should be 10
+    int maxMatrixSize = 11; // should be 15
     double timing;
-    for (int i = 1; i <= 15; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
+    for (int i = 1; i <= maxMatrixSize; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
         timing = test(i, cycles, naiveMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles" << std::endl;
+        std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
         timing = test(i, cycles, basicStrassenMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with Strassen's Algorithm takes " << timing << " cycles" << std::endl;
+        std::cout << "Multiplying 2^" << i << " square matrices with Strassen's Algorithm takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
     }
 
     system("pause");
