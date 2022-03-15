@@ -36,7 +36,7 @@ int main()
         fout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
         std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
         k = 2;
-        for (int j = 1; j < i; k = pow(2, ++j))
+        for (int j = 0; j < i; k = pow(2, ++j))
         {
             timing = test(i, cycles, KStrassenMultiply);
             std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
