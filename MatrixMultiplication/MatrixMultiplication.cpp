@@ -5,7 +5,7 @@
 
 int k = pow(2, 1);
 
-int* add(int* a, int*b, int n);
+int* add(int* a, int* b, int n);
 int* subtract(int* a, int* b, int n);
 int* naiveMultiply(int* a, int* b, int n);
 int* basicStrassenMultiply(int* a, int* b, int n);
@@ -22,15 +22,15 @@ int main()
     double timing;
     for (int i = 1; i <= maxMatrixSize; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
-        if (i == 7)
+        if (i == 6)
             cycles = 100000;
-        if (i == 8)
+        if (i == 7)
             cycles = 10000;
-        if (i == 9)
+        if (i == 8)
             cycles = 1000;
-        if (i == 10)
+        if (i == 9)
             cycles = 100;
-        if (i == 11)
+        if (i == 10)
             cycles = 10;
         timing = test(i, cycles, naiveMultiply);
         fout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
@@ -79,7 +79,7 @@ double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n))
         stop = clock();
         T = stop - start;
         totalTime += T;
-        
+
         delete[] a;
         delete[] b;
         delete[] result;
