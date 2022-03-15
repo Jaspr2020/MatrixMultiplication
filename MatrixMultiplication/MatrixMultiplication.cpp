@@ -40,6 +40,7 @@ int main()
         {
             timing = test(i, cycles, KStrassenMultiply);
             std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+            fout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
         }
     }
     fout.close();
