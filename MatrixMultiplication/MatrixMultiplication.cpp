@@ -1,8 +1,9 @@
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 #include <time.h>
 
-const int k = pow(2, 6);
+int k = pow(2, 1);
 
 int* add(int* a, int*b, int n);
 int* subtract(int* a, int* b, int n);
@@ -13,20 +14,35 @@ double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n));
 
 int main()
 {
+    std::ofstream fout;
+    fout.open("D:\strassenproject.txt");
     srand(time(NULL));
-    int cycles = 1; // should be 10
-    int maxMatrixSize = 11; // should be 15
+    int cycles = 1000000; // should be 10
+    int maxMatrixSize = 15; // should be 15
     double timing;
     for (int i = 1; i <= maxMatrixSize; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
+        if (i == 7)
+            cycles = 100000;
+        if (i == 8)
+            cycles = 10000;
+        if (i == 9)
+            cycles = 1000;
+        if (i == 10)
+            cycles = 100;
+        if (i == 11)
+            cycles = 10;
         timing = test(i, cycles, naiveMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
-        timing = test(i, cycles, basicStrassenMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with Strassen's Algorithm takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
-        timing = test(i, cycles, KStrassenMultiply);
-        std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^6) takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds)" << std::endl;
+        fout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+        std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+        k = 2;
+        for (int j = 1; j <= maxMatrixSize; k = pow(2, ++j))
+        {
+            timing = test(i, cycles, KStrassenMultiply);
+            std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+        }
     }
-
+    fout.close();
     system("pause");
 }
 
@@ -69,7 +85,7 @@ double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n))
         delete[] result;
     }
 
-    return totalTime / (double)cycles;
+    return totalTime;// / (double)(cycles / 10);
 }
 
 int* add(int* a, int* b, int n) {
@@ -265,13 +281,13 @@ int* KStrassenMultiply(int* x, int* y, int n) {
     int* asubc = subtract(a, c, size);
     int* eaddf = add(e, f, size);
 
-    int* p1 = basicStrassenMultiply(a, fsubh, size);
-    int* p2 = basicStrassenMultiply(aaddb, h, size);
-    int* p3 = basicStrassenMultiply(caddd, e, size);
-    int* p4 = basicStrassenMultiply(d, gsube, size);
-    int* p5 = basicStrassenMultiply(aaddd, eaddh, size);
-    int* p6 = basicStrassenMultiply(bsubd, gaddh, size);
-    int* p7 = basicStrassenMultiply(asubc, eaddf, size);
+    int* p1 = KStrassenMultiply(a, fsubh, size);
+    int* p2 = KStrassenMultiply(aaddb, h, size);
+    int* p3 = KStrassenMultiply(caddd, e, size);
+    int* p4 = KStrassenMultiply(d, gsube, size);
+    int* p5 = KStrassenMultiply(aaddd, eaddh, size);
+    int* p6 = KStrassenMultiply(bsubd, gaddh, size);
+    int* p7 = KStrassenMultiply(asubc, eaddf, size);
 
     delete[] fsubh;
     delete[] aaddb;
