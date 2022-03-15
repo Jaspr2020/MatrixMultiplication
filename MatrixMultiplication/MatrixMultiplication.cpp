@@ -35,7 +35,7 @@ int main()
         timing = test(i, cycles, naiveMultiply);
         fout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
         std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
-        k = 2;
+        k = 1;
         for (int j = 0; j < i; k = pow(2, ++j))
         {
             timing = test(i, cycles, KStrassenMultiply);
