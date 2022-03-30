@@ -14,16 +14,15 @@ std::vector<int> add(std::vector<int> a, std::vector<int> b, int n);
 std::vector<int> subtract(std::vector<int> a, std::vector<int> b, int n);
 std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n);
 std::vector<int> StrassenMultiply(std::vector<int> a, std::vector<int> b, int n);
-void test(int power, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n));
+void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n));
 
 int main()
 {
     std::ofstream fout;
     fout.open("C:\strassenproject.txt");
     srand(time(NULL));
-    int cycles = 10;
-    int maxMatrixSize = 15;
-    for (int i = 1; i <= maxMatrixSize; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
+    int cycles = 1;
+    for (int i = 255; i <= 255; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
         //if (i == 6)
         //    cycles = 100000;
@@ -35,13 +34,12 @@ int main()
         //    cycles = 100;
         //if (i == 10)
         //    cycles = 10;
-        std::cout << "2^" << i << "Square Matrix:\n\tNaive:\n";
+        std::cout << i << "x" << i << " Square Matrix:\n\tNaive:\n";
         test(i, cycles, naiveMultiply);
 
-        k = 1;
-        for (int kPower = 0; kPower < i; k = pow(2, ++kPower))
+        for (k = 1; k < i; k++)
         {
-            std::cout << "\tStrassen k=2^"<< kPower<< ":\n";
+            std::cout << "\tStrassen k="<< k<< ":\n";
             test(i, cycles, StrassenMultiply);
         }
             
@@ -50,9 +48,9 @@ int main()
     system("pause");
 }
 
-void test(int power, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n))
+void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n))
 {
-    int size = pow(2, power);
+    //int size = pow(2, power);
 
     for (int i = 0; i < cycles; i++) {
         memoryUsage = 0;
@@ -121,13 +119,27 @@ std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n) {
 }
 
 std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n) {
-    // base case, matrices of size 1 x 1
+    // base case
     if (n <= k) {
         // multiply x and y
         return naiveMultiply(x, y, n);
     }
     //Each subarray is a quadrant, having 1/2 the width and height
-    int size = n / 2;
+    if (n % 2) //pad arrays if odd
+    {
+        std::vector<int> oldX = x;
+        std::vector<int> oldY = y;
+        x = std::vector<int>((n+1) * (n+1), 0);
+        y = std::vector<int>((n+1) * (n+1), 0);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+            {
+                x[i * (n+1) + j] = oldX[i * n + j];
+                y[i * (n+1) + j] = oldY[i * n + j];
+            }
+        n++;
+    }
+    int size = n / 2; //because of int division, will round up
     int arrLen = size * size;
 
     std::vector<int> a(arrLen);   // upper left subarray of x
