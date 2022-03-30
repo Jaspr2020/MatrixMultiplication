@@ -2,60 +2,63 @@
 #include <fstream>
 #include <stdlib.h>
 #include <time.h>
+#include <windows.h>
+#include <psapi.h>
+#include <vector>
+#include <chrono>
 
-int k = pow(2, 1);
+int k;
+SIZE_T memoryUsage;
 
-int* add(int* a, int* b, int n);
-int* subtract(int* a, int* b, int n);
-int* naiveMultiply(int* a, int* b, int n);
-int* basicStrassenMultiply(int* a, int* b, int n);
-int* KStrassenMultiply(int* a, int* b, int n);
-double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n));
+std::vector<int> add(std::vector<int> a, std::vector<int> b, int n);
+std::vector<int> subtract(std::vector<int> a, std::vector<int> b, int n);
+std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n);
+std::vector<int> StrassenMultiply(std::vector<int> a, std::vector<int> b, int n);
+void test(int power, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n));
 
 int main()
 {
     std::ofstream fout;
-    fout.open("D:\strassenproject.txt");
+    fout.open("C:\strassenproject.txt");
     srand(time(NULL));
-    int cycles = 1000000; // should be 10
-    int maxMatrixSize = 15; // should be 15
-    double timing;
+    int cycles = 10;
+    int maxMatrixSize = 15;
     for (int i = 1; i <= maxMatrixSize; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
-        if (i == 6)
-            cycles = 100000;
-        if (i == 7)
-            cycles = 10000;
-        if (i == 8)
-            cycles = 1000;
-        if (i == 9)
-            cycles = 100;
-        if (i == 10)
-            cycles = 10;
-        timing = test(i, cycles, naiveMultiply);
-        fout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
-        std::cout << "Multiplying 2^" << i << " square matrices with naive multiplication takes " << timing << " cycles (" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+        //if (i == 6)
+        //    cycles = 100000;
+        //if (i == 7)
+        //    cycles = 10000;
+        //if (i == 8)
+        //    cycles = 1000;
+        //if (i == 9)
+        //    cycles = 100;
+        //if (i == 10)
+        //    cycles = 10;
+        std::cout << "2^" << i << "Square Matrix:\n\tNaive:\n";
+        test(i, cycles, naiveMultiply);
+
         k = 1;
-        for (int j = 0; j < i; k = pow(2, ++j))
+        for (int kPower = 0; kPower < i; k = pow(2, ++kPower))
         {
-            timing = test(i, cycles, KStrassenMultiply);
-            std::cout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
-            fout << "Multiplying 2^" << i << " square matrices with SAMk (k = 2^" << j << ") takes " << timing << " cycles(" << timing / CLOCKS_PER_SEC << " seconds) per " << cycles << std::endl;
+            std::cout << "\tStrassen k=2^"<< kPower<< ":\n";
+            test(i, cycles, StrassenMultiply);
         }
+            
     }
     fout.close();
     system("pause");
 }
 
-double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n))
+void test(int power, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n))
 {
     int size = pow(2, power);
-    double totalTime = 0.0;
 
     for (int i = 0; i < cycles; i++) {
+        memoryUsage = 0;
         // declaration and initialization of matrix A and matrix B
-        int* a = new int[size * size];
-        int* b = new int[size * size];
+        std::vector<int> a(size * size);
+        std::vector<int> b(size * size);
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 a[size * r + c] = rand() % 10 + 1;
@@ -68,29 +71,20 @@ double test(int power, int cycles, int* multiplyFunc(int* a, int* b, int n))
         }
 
         // declaration of result matrix
-        int* result;
-
-        // clock variables
-        double T = 0.0;
-        clock_t start, stop;
+        std::vector<int> result(size*size);
 
         // matrix multiplication
-        start = clock();
+        auto start = std::chrono::steady_clock::now();
         result = multiplyFunc(a, b, size);
-        stop = clock();
-        T = stop - start;
-        totalTime += T;
+        auto stop = std::chrono::steady_clock::now();
+        std::chrono::duration<double> T = (stop - start);
 
-        delete[] a;
-        delete[] b;
-        delete[] result;
+        std::cout << "\t\ttime: " << T.count() << "s, Heap Usage:" << memoryUsage << "B, IO Usage:" << a.size() + b.size() + result.size() << "B\n";
     }
-
-    return totalTime;// / (double)(cycles / 10);
 }
 
-int* add(int* a, int* b, int n) {
-    int* result = new int[n * n];
+std::vector<int> add(std::vector<int> a, std::vector<int> b, int n) {
+    std::vector<int> result(n * n);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -100,8 +94,8 @@ int* add(int* a, int* b, int n) {
     return result;
 }
 
-int* subtract(int* a, int* b, int n) {
-    int* result = new int[n * n];
+std::vector<int> subtract(std::vector<int> a, std::vector<int> b, int n) {
+    std::vector<int> result(n * n);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -111,8 +105,8 @@ int* subtract(int* a, int* b, int n) {
     return result;
 }
 
-int* naiveMultiply(int* a, int* b, int n) {
-    int* result = new int[n * n];
+std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n) {
+    std::vector<int> result(n * n);
 
     for (int r = 0; r < n; r++) {
         for (int c = 0; c < n; c++) {
@@ -126,119 +120,7 @@ int* naiveMultiply(int* a, int* b, int n) {
     return result;
 }
 
-int* basicStrassenMultiply(int* x, int* y, int n) {
-    // base case, matrices of size 1 x 1
-    if (n == 1) {
-        // multiply x and y
-        return naiveMultiply(x, y, n);
-    }
-    //Each subarray is a quadrant, having 1/2 the width and height
-    int size = n / 2;
-    int arrLen = size * size;
-
-    int* a = new int[arrLen];   // upper left subarray of x
-    int* b = new int[arrLen];   // upper right subarray of x
-    int* c = new int[arrLen];   // lower left subarray of x
-    int* d = new int[arrLen];   // lower right subarray of x
-    int* e = new int[arrLen];   // upper left subarray of y
-    int* f = new int[arrLen];   // upper right subarray of y
-    int* g = new int[arrLen];   // lower left subarray of y
-    int* h = new int[arrLen];   // lower right subarray of y
-
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-        {
-            a[i * size + j] = x[i * n + j];
-            b[i * size + j] = x[i * n + j + size];
-            c[i * size + j] = x[(i + size) * n + j];
-            d[i * size + j] = x[(i + size) * n + j + size];
-            e[i * size + j] = y[i * n + j];
-            f[i * size + j] = y[i * n + j + size];
-            g[i * size + j] = y[(i + size) * n + j];
-            h[i * size + j] = y[(i + size) * n + j + size];
-        }
-
-    // calculating submatrices
-    int* fsubh = subtract(f, h, size);
-    int* aaddb = add(a, b, size);
-    int* caddd = add(c, d, size);
-    int* gsube = subtract(g, e, size);
-    int* aaddd = add(a, d, size);
-    int* eaddh = add(e, h, size);
-    int* bsubd = subtract(b, d, size);
-    int* gaddh = add(g, h, size);
-    int* asubc = subtract(a, c, size);
-    int* eaddf = add(e, f, size);
-
-    int* p1 = basicStrassenMultiply(a, fsubh, size);
-    int* p2 = basicStrassenMultiply(aaddb, h, size);
-    int* p3 = basicStrassenMultiply(caddd, e, size);
-    int* p4 = basicStrassenMultiply(d, gsube, size);
-    int* p5 = basicStrassenMultiply(aaddd, eaddh, size);
-    int* p6 = basicStrassenMultiply(bsubd, gaddh, size);
-    int* p7 = basicStrassenMultiply(asubc, eaddf, size);
-
-    delete[] fsubh;
-    delete[] aaddb;
-    delete[] caddd;
-    delete[] gsube;
-    delete[] aaddd;
-    delete[] eaddh;
-    delete[] bsubd;
-    delete[] gaddh;
-    delete[] asubc;
-    delete[] eaddf;
-
-    // calculating submatrices
-    int* c11InnerAdd = add(p5, p4, size);
-    int* c11InnerSub = subtract(c11InnerAdd, p2, size);
-    int* c11 = add(c11InnerSub, p6, size);
-    int* c12 = add(p1, p2, size);
-    int* c21 = add(p3, p4, size);
-    int* c22InnerAdd = add(p1, p5, size);
-    int* c22InnerSub = subtract(c22InnerAdd, p3, size);
-    int* c22 = subtract(c22InnerSub, p7, size);
-
-    delete[] c11InnerAdd;
-    delete[] c11InnerSub;
-    delete[] c22InnerAdd;
-    delete[] c22InnerSub;
-
-    // generate result matrix from "c" matrices
-    int* result = new int[n * n];
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-        {
-            result[i * n + j] = c11[i * size + j];
-            result[i * n + j + size] = c12[i * size + j];
-            result[(i + size) * n + j] = c21[i * size + j];
-            result[(i + size) * n + j + size] = c22[i * size + j];
-        }
-
-    delete[] a;
-    delete[] b;
-    delete[] c;
-    delete[] d;
-    delete[] e;
-    delete[] f;
-    delete[] g;
-    delete[] h;
-    delete[] p1;
-    delete[] p2;
-    delete[] p3;
-    delete[] p4;
-    delete[] p5;
-    delete[] p6;
-    delete[] p7;
-    delete[] c11;
-    delete[] c12;
-    delete[] c21;
-    delete[] c22;
-
-    return result;
-}
-
-int* KStrassenMultiply(int* x, int* y, int n) {
+std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n) {
     // base case, matrices of size 1 x 1
     if (n <= k) {
         // multiply x and y
@@ -248,14 +130,14 @@ int* KStrassenMultiply(int* x, int* y, int n) {
     int size = n / 2;
     int arrLen = size * size;
 
-    int* a = new int[arrLen];   // upper left subarray of x
-    int* b = new int[arrLen];   // upper right subarray of x
-    int* c = new int[arrLen];   // lower left subarray of x
-    int* d = new int[arrLen];   // lower right subarray of x
-    int* e = new int[arrLen];   // upper left subarray of y
-    int* f = new int[arrLen];   // upper right subarray of y
-    int* g = new int[arrLen];   // lower left subarray of y
-    int* h = new int[arrLen];   // lower right subarray of y
+    std::vector<int> a(arrLen);   // upper left subarray of x
+    std::vector<int> b(arrLen);   // upper right subarray of x
+    std::vector<int> c(arrLen);   // lower left subarray of x
+    std::vector<int> d(arrLen);   // lower right subarray of x
+    std::vector<int> e(arrLen);   // upper left subarray of y
+    std::vector<int> f(arrLen);   // upper right subarray of y
+    std::vector<int> g(arrLen);   // lower left subarray of y
+    std::vector<int> h(arrLen);   // lower right subarray of y
 
     for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
@@ -271,53 +153,53 @@ int* KStrassenMultiply(int* x, int* y, int n) {
         }
 
     // calculating submatrices
-    int* fsubh = subtract(f, h, size);
-    int* aaddb = add(a, b, size);
-    int* caddd = add(c, d, size);
-    int* gsube = subtract(g, e, size);
-    int* aaddd = add(a, d, size);
-    int* eaddh = add(e, h, size);
-    int* bsubd = subtract(b, d, size);
-    int* gaddh = add(g, h, size);
-    int* asubc = subtract(a, c, size);
-    int* eaddf = add(e, f, size);
+    std::vector<int> fsubh = subtract(f, h, size);
+    std::vector<int> aaddb = add(a, b, size);
+    std::vector<int> caddd = add(c, d, size);
+    std::vector<int> gsube = subtract(g, e, size);
+    std::vector<int> aaddd = add(a, d, size);
+    std::vector<int> eaddh = add(e, h, size);
+    std::vector<int> bsubd = subtract(b, d, size);
+    std::vector<int> gaddh = add(g, h, size);
+    std::vector<int> asubc = subtract(a, c, size);
+    std::vector<int> eaddf = add(e, f, size);
 
-    int* p1 = KStrassenMultiply(a, fsubh, size);
-    int* p2 = KStrassenMultiply(aaddb, h, size);
-    int* p3 = KStrassenMultiply(caddd, e, size);
-    int* p4 = KStrassenMultiply(d, gsube, size);
-    int* p5 = KStrassenMultiply(aaddd, eaddh, size);
-    int* p6 = KStrassenMultiply(bsubd, gaddh, size);
-    int* p7 = KStrassenMultiply(asubc, eaddf, size);
+    std::vector<int> p1 = StrassenMultiply(a, fsubh, size);
+    std::vector<int> p2 = StrassenMultiply(aaddb, h, size);
+    std::vector<int> p3 = StrassenMultiply(caddd, e, size);
+    std::vector<int> p4 = StrassenMultiply(d, gsube, size);
+    std::vector<int> p5 = StrassenMultiply(aaddd, eaddh, size);
+    std::vector<int> p6 = StrassenMultiply(bsubd, gaddh, size);
+    std::vector<int> p7 = StrassenMultiply(asubc, eaddf, size);
 
-    delete[] fsubh;
-    delete[] aaddb;
-    delete[] caddd;
-    delete[] gsube;
-    delete[] aaddd;
-    delete[] eaddh;
-    delete[] bsubd;
-    delete[] gaddh;
-    delete[] asubc;
-    delete[] eaddf;
+    memoryUsage += fsubh.size();
+    memoryUsage += aaddb.size();
+    memoryUsage += caddd.size();
+    memoryUsage += gsube.size();
+    memoryUsage += aaddd.size();
+    memoryUsage += eaddh.size();
+    memoryUsage += bsubd.size();
+    memoryUsage += gaddh.size();
+    memoryUsage += asubc.size();
+    memoryUsage += eaddf.size();
 
     // calculating submatrices
-    int* c11InnerAdd = add(p5, p4, size);
-    int* c11InnerSub = subtract(c11InnerAdd, p2, size);
-    int* c11 = add(c11InnerSub, p6, size);
-    int* c12 = add(p1, p2, size);
-    int* c21 = add(p3, p4, size);
-    int* c22InnerAdd = add(p1, p5, size);
-    int* c22InnerSub = subtract(c22InnerAdd, p3, size);
-    int* c22 = subtract(c22InnerSub, p7, size);
+    std::vector<int> c11InnerAdd = add(p5, p4, size);
+    std::vector<int> c11InnerSub = subtract(c11InnerAdd, p2, size);
+    std::vector<int> c11 = add(c11InnerSub, p6, size);
+    std::vector<int> c12 = add(p1, p2, size);
+    std::vector<int> c21 = add(p3, p4, size);
+    std::vector<int> c22InnerAdd = add(p1, p5, size);
+    std::vector<int> c22InnerSub = subtract(c22InnerAdd, p3, size);
+    std::vector<int> c22 = subtract(c22InnerSub, p7, size);
 
-    delete[] c11InnerAdd;
-    delete[] c11InnerSub;
-    delete[] c22InnerAdd;
-    delete[] c22InnerSub;
+    memoryUsage += c11InnerAdd.size();
+    memoryUsage += c11InnerSub.size();
+    memoryUsage += c22InnerAdd.size();
+    memoryUsage += c22InnerSub.size();
 
     // generate result matrix from "c" matrices
-    int* result = new int[n * n];
+    std::vector<int> result(n * n);
     for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
         {
@@ -327,25 +209,25 @@ int* KStrassenMultiply(int* x, int* y, int n) {
             result[(i + size) * n + j + size] = c22[i * size + j];
         }
 
-    delete[] a;
-    delete[] b;
-    delete[] c;
-    delete[] d;
-    delete[] e;
-    delete[] f;
-    delete[] g;
-    delete[] h;
-    delete[] p1;
-    delete[] p2;
-    delete[] p3;
-    delete[] p4;
-    delete[] p5;
-    delete[] p6;
-    delete[] p7;
-    delete[] c11;
-    delete[] c12;
-    delete[] c21;
-    delete[] c22;
+    memoryUsage += a.size();
+    memoryUsage += b.size();
+    memoryUsage += c.size();
+    memoryUsage += d.size();
+    memoryUsage += e.size();
+    memoryUsage += f.size();
+    memoryUsage += g.size();
+    memoryUsage += h.size();
+    memoryUsage += p1.size();
+    memoryUsage += p2.size();
+    memoryUsage += p3.size();
+    memoryUsage += p4.size();
+    memoryUsage += p5.size();
+    memoryUsage += p6.size();
+    memoryUsage += p7.size();
+    memoryUsage += c11.size();
+    memoryUsage += c12.size();
+    memoryUsage += c21.size();
+    memoryUsage += c22.size();
 
     return result;
 }
