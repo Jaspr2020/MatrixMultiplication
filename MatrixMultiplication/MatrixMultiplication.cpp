@@ -7,8 +7,9 @@
 #include <vector>
 #include <chrono>
 
-int k;
+int k = 1;
 SIZE_T memoryUsage;
+std::ofstream fout;
 
 std::vector<int> add(std::vector<int> a, std::vector<int> b, int n);
 std::vector<int> subtract(std::vector<int> a, std::vector<int> b, int n);
@@ -18,31 +19,22 @@ void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a
 
 int main()
 {
-    std::ofstream fout;
-    fout.open("C:\strassenproject.txt");
+    fout.open("D:\\strassenproject.txt");
     srand(time(NULL));
-    int cycles = 1;
-    for (int i = 255; i <= 255; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
+    int cycles = 10;
+    for (int i = 0; i <= 15; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
     {
-        //if (i == 6)
-        //    cycles = 100000;
-        //if (i == 7)
-        //    cycles = 10000;
-        //if (i == 8)
-        //    cycles = 1000;
-        //if (i == 9)
-        //    cycles = 100;
-        //if (i == 10)
-        //    cycles = 10;
-        std::cout << i << "x" << i << " Square Matrix:\n\tNaive:\n";
-        test(i, cycles, naiveMultiply);
+        k = 1;
+        std::cout << "2^" << i << " Square Matrix:\n";
+        fout << "2^" << i << "\n";
 
-        for (k = 1; k < i; k++)
+        for (int j = 0; j <= i; k = pow(2,++j))
         {
-            std::cout << "\tStrassen k="<< k<< ":\n";
-            test(i, cycles, StrassenMultiply);
+            std::cout << "\tStrassen k="<< j << ":\n";
+            fout << "\tk=2^" << j << "\tTime\tHeap\tIO\n";
+            test(pow(2, i), cycles, StrassenMultiply); //k=2^i is equivalent to naive
         }
-            
+        fout << "\n";
     }
     fout.close();
     system("pause");
@@ -77,7 +69,8 @@ void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a
         auto stop = std::chrono::steady_clock::now();
         std::chrono::duration<double> T = (stop - start);
 
-        std::cout << "\t\ttime: " << T.count() << "s, Heap Usage:" << memoryUsage << "B, IO Usage:" << a.size() + b.size() + result.size() << "B\n";
+        std::cout << "\t\tTime: " << T.count() << "s, Heap Usage:" << memoryUsage << "B, IO Usage:" << a.size() + b.size() + result.size() << "B\n";
+        fout << "\t\t" << T.count() << "\t" << memoryUsage << "\t" << a.size() + b.size() + result.size() << "\n";
     }
 }
 
@@ -139,7 +132,7 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
             }
         n++;
     }
-    int size = n / 2; //because of int division, will round up
+    int size = n / 2; //because of int division, will round correctly
     int arrLen = size * size;
 
     std::vector<int> a(arrLen);   // upper left subarray of x
@@ -184,16 +177,7 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
     std::vector<int> p6 = StrassenMultiply(bsubd, gaddh, size);
     std::vector<int> p7 = StrassenMultiply(asubc, eaddf, size);
 
-    memoryUsage += fsubh.size();
-    memoryUsage += aaddb.size();
-    memoryUsage += caddd.size();
-    memoryUsage += gsube.size();
-    memoryUsage += aaddd.size();
-    memoryUsage += eaddh.size();
-    memoryUsage += bsubd.size();
-    memoryUsage += gaddh.size();
-    memoryUsage += asubc.size();
-    memoryUsage += eaddf.size();
+
 
     // calculating submatrices
     std::vector<int> c11InnerAdd = add(p5, p4, size);
@@ -204,11 +188,6 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
     std::vector<int> c22InnerAdd = add(p1, p5, size);
     std::vector<int> c22InnerSub = subtract(c22InnerAdd, p3, size);
     std::vector<int> c22 = subtract(c22InnerSub, p7, size);
-
-    memoryUsage += c11InnerAdd.size();
-    memoryUsage += c11InnerSub.size();
-    memoryUsage += c22InnerAdd.size();
-    memoryUsage += c22InnerSub.size();
 
     // generate result matrix from "c" matrices
     std::vector<int> result(n * n);
@@ -221,6 +200,7 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
             result[(i + size) * n + j + size] = c22[i * size + j];
         }
 
+    //Calculate Heap Usage
     memoryUsage += a.size();
     memoryUsage += b.size();
     memoryUsage += c.size();
@@ -229,6 +209,16 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
     memoryUsage += f.size();
     memoryUsage += g.size();
     memoryUsage += h.size();
+    memoryUsage += fsubh.size();
+    memoryUsage += aaddb.size();
+    memoryUsage += caddd.size();
+    memoryUsage += gsube.size();
+    memoryUsage += aaddd.size();
+    memoryUsage += eaddh.size();
+    memoryUsage += bsubd.size();
+    memoryUsage += gaddh.size();
+    memoryUsage += asubc.size();
+    memoryUsage += eaddf.size();
     memoryUsage += p1.size();
     memoryUsage += p2.size();
     memoryUsage += p3.size();
@@ -237,8 +227,12 @@ std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n)
     memoryUsage += p6.size();
     memoryUsage += p7.size();
     memoryUsage += c11.size();
+    memoryUsage += c11InnerAdd.size();
+    memoryUsage += c11InnerSub.size();
     memoryUsage += c12.size();
     memoryUsage += c21.size();
+    memoryUsage += c22InnerAdd.size();
+    memoryUsage += c22InnerSub.size();
     memoryUsage += c22.size();
 
     return result;
