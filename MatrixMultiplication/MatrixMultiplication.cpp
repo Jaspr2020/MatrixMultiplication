@@ -7,58 +7,103 @@
 #include <vector>
 #include <chrono>
 
-int k = 1;
+const int k = 4096;
 SIZE_T memoryUsage;
 std::ofstream fout;
 
-std::vector<int> add(std::vector<int> a, std::vector<int> b, int n);
-std::vector<int> subtract(std::vector<int> a, std::vector<int> b, int n);
+struct data
+{
+    double time;
+    SIZE_T memory;
+
+    data()
+    {
+        time = 0;
+        memory = 0;
+    }
+    data(double t, SIZE_T m)
+    {
+        time = t;
+        memory = m;
+    }
+};
+
+std::vector<int> add(int a(int index), int b(int index), int n);
+std::vector<int> subtract(int a(int index), int b(int index), int n);
 std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n);
 std::vector<int> StrassenMultiply(std::vector<int> a, std::vector<int> b, int n);
-void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n));
+data test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n));
+
+
 
 int main()
 {
-    fout.open("D:\\strassenproject.txt");
+    fout.open("D:\\Strassen\\BAM.txt");
     srand(time(NULL));
     int cycles = 10;
-    for (int i = 0; i <= 15; i++) //2^31 is the max int so 2^15 x 2^15 is the largest 2^n square matrix
+    double timeTotal = 0;
+    SIZE_T sizeTotal = 0;
+    data runs[10];
+    for (int i = 0; i <= 4096; i++)
     {
-        k = 1;
-        std::cout << "2^" << i << " Square Matrix:\n";
-        fout << "2^" << i << "\n";
+        timeTotal = 0;
+        sizeTotal = 0;
+        //k = 1;
+        //std::cout << "2^" << i << " Square Matrix:\n";
+        std::cout << i << "\t";
+        //fout << "2^" << i << "\n";
 
-        for (int j = 0; j <= i; k = pow(2,++j))
+        //for (int j = 0; j <= i; k = pow(2,++j))
+        //{
+            //std::cout << "\tStrassen k="<< j << ":\n";
+            //fout << "\tk=2^" << j << "\tTime\tHeap\tIO\n";
+        fout << i << "\t";
+        for (int j = 0; j < 10; j++)
         {
-            std::cout << "\tStrassen k="<< j << ":\n";
-            fout << "\tk=2^" << j << "\tTime\tHeap\tIO\n";
-            test(pow(2, i), cycles, StrassenMultiply); //k=2^i is equivalent to naive
+            runs[j] = test(/*pow(2, i)*/i, cycles, StrassenMultiply); //k=2^i is equivalent to naive
+            timeTotal += runs[j].time;
+            sizeTotal += runs[j].memory;
         }
-        fout << "\n";
+        double timeAvg = timeTotal / cycles;
+        SIZE_T memAvg = sizeTotal / cycles;
+        double timeStdDev = 0;
+        SIZE_T memStdDev = 0;
+        for (int j = 0; j < 10; j++)
+        {
+            timeStdDev += pow(runs[j].time - timeAvg, 2);
+            memStdDev += pow(runs[j].memory - memAvg, 2);
+        }
+        timeStdDev = sqrt(timeStdDev/cycles);
+        memStdDev = sqrt(memStdDev/cycles);
+            
+        //}
+        fout << timeAvg << "\t" << timeStdDev << "\t" << memAvg << "\t" << memStdDev << "\n";
+        std::cout << timeAvg << "\t" << timeStdDev << "\t" << memAvg << "\t" << memStdDev << "\n";
     }
     fout.close();
     system("pause");
 }
 
-void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n))
+data test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a, std::vector<int> b, int n))
 {
     //int size = pow(2, power);
+    std::vector<int> a(size * size);
+    std::vector<int> b(size * size);
+    for (int r = 0; r < size; r++) {
+        for (int c = 0; c < size; c++) {
+            a[size * r + c] = rand() % 10 + 1;
+        }
+    }
+    for (int r = 0; r < size; r++) {
+        for (int c = 0; c < size; c++) {
+            b[size * r + c] = rand() % 10 + 1;
+        }
+    }
 
     for (int i = 0; i < cycles; i++) {
         memoryUsage = 0;
         // declaration and initialization of matrix A and matrix B
-        std::vector<int> a(size * size);
-        std::vector<int> b(size * size);
-        for (int r = 0; r < size; r++) {
-            for (int c = 0; c < size; c++) {
-                a[size * r + c] = rand() % 10 + 1;
-            }
-        }
-        for (int r = 0; r < size; r++) {
-            for (int c = 0; c < size; c++) {
-                b[size * r + c] = rand() % 10 + 1;
-            }
-        }
+        
 
         // declaration of result matrix
         std::vector<int> result(size*size);
@@ -69,8 +114,10 @@ void test(int size, int cycles, std::vector<int> multiplyFunc(std::vector<int> a
         auto stop = std::chrono::steady_clock::now();
         std::chrono::duration<double> T = (stop - start);
 
-        std::cout << "\t\tTime: " << T.count() << "s, Heap Usage:" << memoryUsage << "B, IO Usage:" << a.size() + b.size() + result.size() << "B\n";
-        fout << "\t\t" << T.count() << "\t" << memoryUsage << "\t" << a.size() + b.size() + result.size() << "\n";
+        //std::cout << "\t\tTime: " << T.count() << "s, Heap Usage:" << memoryUsage << "B, IO Usage:" << a.size() + b.size() + result.size() << "B\n";
+        //fout << "\t\t" << T.count() << "\t" << memoryUsage << "\t" << a.size() + b.size() + result.size() << "\n";
+        //fout << T.count() << "\t" << memoryUsage << "\t" << a.size() + b.size() + result.size() << "\n";
+        return data(T.count(), memoryUsage + a.size() + b.size() + result.size());
     }
 }
 
@@ -110,6 +157,46 @@ std::vector<int> naiveMultiply(std::vector<int> a, std::vector<int> b, int n) {
 
     return result;
 }
+
+//class Matrix
+//{
+//public:
+//    Matrix(std::vector<int>* vector)
+//    {
+//        realMatrix = vector;
+//    }
+//    int at(int index)
+//    {
+//        return realMatrix->at(index);
+//    }
+//private:
+//    std::vector<int> *realMatrix;
+//};
+//
+//class ULMatrix : Matrix
+//{
+//    int at(int index)
+//    {
+//
+//    }
+//};
+//
+//class URMatrix : Matrix
+//{
+//
+//};
+//
+//class BLMatrix : Matrix
+//{
+//
+//};
+//
+//class BRMatrix : Matrix
+//{
+//
+//};
+
+
 
 std::vector<int> StrassenMultiply(std::vector<int> x, std::vector<int> y, int n) {
     // base case
